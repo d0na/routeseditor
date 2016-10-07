@@ -5,10 +5,27 @@
 <link rel="stylesheet" href="css/main.css">
 <body>
 
+<?php
+
+$img = isset($_GET['img']) ? $_GET['img'] : '';
+
+
+
+
+
+list($img_width, $img_height) = getimagesize('res/'.$img);
+
+
+?>
+
+
+
+<a href="index.php" class="flatbtn" >HOME</a>
+<p/>
 <!--BOTTONI -->
 <a href="#" class="flatbtn" id="btnAdd">Nuova via</a>
 <a href="#" class="flatbtn" id="btnDelete" style="background-color: red">Elimina via</a>
-<a href="#" class="flatbtn" id="btnUndo" style="background-color: lightskyblue">Undo</a>
+<!--<a href="#" class="flatbtn" id="btnUndo" style="background-color: lightskyblue">Undo</a>-->
 <a href="#" class="flatbtn" id="btnDeletePoint" style="background-color: darkgoldenrod">Elimina punto</a>
 <a href="#savemodal" class="flatbtn" id="modaltrigger" style="background-color: green">Salva</a>
 
@@ -24,6 +41,7 @@
     var allPoints = {};
     var lastPoint = 50;
     var offsetPoint = 20;
+    var undoPoints=[];
 
     document.getElementById("btnDeletePoint").addEventListener("click", function () {
         $('.selected').remove();
@@ -39,12 +57,15 @@
         redraw();
     });
 
+    Array.prototype.last = function() {
+        return this[this.length-1];
+    }
+
     //Undo operazioni
-    document.getElementById("btnUndo").addEventListener("click", function () {
-        $('.selected').remove();
-        allPoints[key].pop();
-        redraw();
-    });
+//    document.getElementById("btnUndo").addEventListener("click", function () {
+//        $('.selected').remove();
+//        undo();
+//    });
 
     //Aggiuni via
     document.getElementById("btnAdd").addEventListener("click", function () {
@@ -58,8 +79,8 @@
 //
 //    });
 
-    var width = 1024,
-        height = 768;
+    var width = <?php echo $img_width; ?>,
+        height = <?php echo $img_height; ?>;
 
     var dragged = null, selected = null, first = null;
 
@@ -73,13 +94,11 @@
 
     //Add an image (Crag image)
     svg.append("svg:image")
-        .attr('x', -280)
-        .attr('y', 5)
         .attr('width', width)
         .attr('height', height)
         //        .style("width", 'auto')
         //        .style("height", 'auto')
-        .attr("xlink:href", "img/test.jpg");
+        .attr("xlink:href", "uploads/<?php echo $img; ?>");
 
     //Draw the rectangle
     svg.append("rect")
@@ -98,6 +117,8 @@
     function mousedown() {
         selected = dragged = d3.mouse(svg.node());
         allPoints[key].push(selected);
+        //undo.push([key,selected]);
+        undoPoints.push(key);
         redraw();
     }
 
@@ -133,8 +154,15 @@
 
     //Rimuove i punti
     function removePoint(s) {
-        var key = getKeyByValue(selected);
+        var key = getKeyByValue(s);
         var i = allPoints[key].indexOf(s);
+        allPoints[key].splice(i, 1);
+        redraw();
+    }
+
+    //Rimuove i punti
+    function undo() {
+        var i = allPoints[key].indexOf(selected);
         allPoints[key].splice(i, 1);
         selected = allPoints[key].length ? allPoints[key][i > 0 ? i - 1 : 0] : null;
         redraw();
