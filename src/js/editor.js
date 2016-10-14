@@ -1,21 +1,22 @@
-var idLine = 0;
+var routesCounter = 0;
 var key = null;
 var allPoints = {};
-var lastPoint = 50;
+var startPoint = 50;
 var offsetPoint = 20;
 var undoPoints = [];
 var dragged = null, selected = null, first = null;
-
 var line, svg = null;
 
-function init(){
+function init(width,height,image){
+
     if (image != ''){
+
         line = d3.svg.line();
+
         //Make an SVG container
         svg = d3.select("#crag").append("svg")
             .attr('width', width)
-            .attr('height', height)
-        //        .attr("tabindex", 1);
+            .attr('height', height);
 
         //Add an image (Crag image)
         svg.append("svg:image")
@@ -23,7 +24,7 @@ function init(){
             .attr('height', height)
             //        .style("width", 'auto')
             //        .style("height", 'auto')
-            .attr("xlink:href", "res/"+image);
+            .attr("xlink:href", image);
 
         //Draw the rectangle
         svg.append("rect")
@@ -37,19 +38,24 @@ function init(){
             .on("keydown", keydown);
 
         line.interpolate("cardinal");
-        svg.node().focus();
+        //svg.node().focus();
     }
 }
 
 
 function mousedown() {
-    selected = dragged = d3.mouse(svg.node());
+    coord = d3.mouse(svg.node());
+    console.log(coord);
+    appendPoint(coord);
+}
+
+
+function appendPoint(coordinates){
+    selected = dragged = coordinates;
     allPoints[key].push(selected);
-    //undo.push([key,selected]);
     undoPoints.push(key);
     redraw();
 }
-
 function mousemove() {
     if (!dragged) return;
     var m = d3.mouse(svg.node());
@@ -59,16 +65,14 @@ function mousemove() {
 }
 
 function mouseup() {
-//        console.log(d3.selected);
     key = getKeyByValue(selected);
-
     if (!dragged) return;
     mousemove();
     dragged = null;
 }
 
 
-//Intercetta la pressione dei tasti, backspace
+//Intercetta la pressione dei tasti, backspace, delete
 function keydown() {
     if (!selected) return;
     switch (d3.event.keyCode) {
@@ -97,10 +101,26 @@ function undo() {
 }
 
 
-function newRoute() {
-    idLine++; //incrementa id della via
-    key = "route_" + idLine;
-    allPoints[key] = [[lastPoint = lastPoint + offsetPoint, 200]]; //posiziona il primo punto
+function newRoute(k,xPoint,yPoint) {
+    routesCounter++; //incrementa id della via
+
+    if (k == null) {
+        key = "route_" + routesCounter;
+    } else {
+        key= k;
+    }
+
+    if (xPoint != null) {
+        startPoint  = xPoint;
+    } else {
+     startPoint = startPoint + offsetPoint;
+    }
+
+    coord = [[startPoint , (yPoint == null ? 200: yPoint)]]
+    allPoints[key] =coord;
+        // key = "route_" + routesCounter;
+    // allPoints[key] = [[startPoint = startPoint + offsetPoint, 200]]; //posiziona il primo punto
+    //allPoints[key] = [[xPoint, yPoint]]; //posiziona il primo punto
     selected = allPoints[key][0];           //resetta il punto selezionato
     first = selected;
 
@@ -181,8 +201,8 @@ function redraw() {
 
 function duplicateRoute() {
     var keyRef = key;
-    idLine++; //incrementa id della via
-    key = "route_" + idLine;
+    routesCounter++; //incrementa id della via
+    key = "route_" + routesCounter;
 
     allPoints[key] = allPoints[keyRef]; //posiziona il primo punto
 
@@ -208,3 +228,4 @@ function cloneSelection(appendTo, toCopy, times, dataVal) {
     });
     return appendTo.selectAll('.clone');
 }
+
