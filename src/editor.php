@@ -8,13 +8,15 @@
 <?php
 
 $img = isset($_GET['img']) ? $_GET['img'] : '';
+$svg = isset($_GET['svg']) ? $_GET['svg'] : '';
 
+$img_width = null;
+$img_height = null;
 
+if (!empty($img)){
 
-
-
-list($img_width, $img_height) = getimagesize('res/'.$img);
-
+    list($img_width, $img_height) = getimagesize('res/'.$img);
+}
 
 ?>
 
@@ -28,7 +30,7 @@ list($img_width, $img_height) = getimagesize('res/'.$img);
 <!--<a href="#" class="flatbtn" id="btnUndo" style="background-color: lightskyblue">Undo</a>-->
 <a href="#" class="flatbtn" id="btnDeletePoint" style="background-color: darkgoldenrod">Elimina punto</a>
 <a href="#savemodal" class="flatbtn" id="modaltrigger" style="background-color: green">Salva</a>
-<a href="#" class="flatbtn" id="btnImport">Importa</a>
+
 <div id="crag"></div>
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -63,20 +65,23 @@ list($img_width, $img_height) = getimagesize('res/'.$img);
             newRoute();
     });
 
+    var image = '<?php echo $img ?>';
+    var extsvg = '<?php echo $svg ?>';
 
+    if (image != ''){
 
-    width = <?php echo (is_null($img_width)?"930":$img_width); ?>;
-    height = <?php echo (is_null($img_height)?"930":$img_height);  ?>;
-    image = 'res/'+'<?php echo $img ?>';
+        width = <?php echo (is_null($img_width)?"930":$img_width); ?>;
+        height = <?php echo (is_null($img_height)?"930":$img_height);  ?>;
+        init(width,height,'res/'+image);
 
-    //Controllo bottone importa via
-    document.getElementById("btnImport").addEventListener("click", function () {
-
-        //Carica un SVG esterno
-        d3.xml("svg/example.svg").mimeType("image/svg+xml").get(function (error, data) {
+    } else if (extsvg != '') {
+        //loads the external svg
+        d3.xml("svg/"+extsvg).mimeType("image/svg+xml").get(function (error, data) {
             if (error) throw error;
 
-            //Recupera l'immagine
+
+
+            //Recupera l'immagine nel SVG
             img = [].map.call(data.querySelectorAll("image"), function (d) {
                 return {
                     link: d.getAttribute("xlink:href"),
@@ -84,12 +89,45 @@ list($img_width, $img_height) = getimagesize('res/'.$img);
                     height: d.getAttribute("height")
                 };
             });
+
+            width =img.map(function (d) {return d.width;})
+            height = img.map(function (d) {return d.height;})
             image = img.map(function (d) {return d.link;});
+
+            init(width,height,image);
+
+
+
+            //Recupera i path
+            circles = [].map.call(data.querySelectorAll("circle"), function (c) {
+                return {
+                    route: c.getAttribute("data-route"),
+                    cx: c.getAttribute("cx"),
+                    cy: c.getAttribute("cy"),
+                    cl: c.getAttribute("class")
+                };})
+
+            tKey = '';
+            circles.forEach(function(v, key, circles) {
+                console.log("m[" + v.route + "] = "+ v.cx+","+v.cy+","+v.cl);
+                if (tKey != v.route){
+                    tKey=v.route;
+                    newRoute(v.route, v.cx,v.cy)
+                } else {
+                    tKey = key = v.route;
+                    appendPoint([v.cx,v.cy]);
+                }
+                // Do something
+
+            });
+
         });
-    });
 
-    init(width,height,image);
+        $('circle').show();
 
+    } else {
+        die('Some problem occur');
+    }
 //    //Controllo bottone importa via
 //    document.getElementById("btnImport").addEventListener("click", function () {
 //        d3.xml("svg/example.svg").mimeType("image/svg+xml").get(function(error, xml) {
