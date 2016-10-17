@@ -44,18 +44,9 @@ function init(width,height,image){
 
 
 function mousedown() {
-    coord = d3.mouse(svg.node());
-    console.log(coord);
-    appendPoint(coord);
+    appendPoint(d3.mouse(svg.node()));
 }
 
-
-function appendPoint(coordinates){
-    selected = dragged = coordinates;
-    allPoints[key].push(selected);
-    undoPoints.push(key);
-    redraw();
-}
 function mousemove() {
     if (!dragged) return;
     var m = d3.mouse(svg.node());
@@ -82,6 +73,13 @@ function keydown() {
             break;
         }
     }
+}
+
+function appendPoint(coordinates){
+    selected = dragged = coordinates;
+    allPoints[key].push(selected);
+    undoPoints.push(key);
+    redraw();
 }
 
 //Rimuove i punti
@@ -113,14 +111,11 @@ function newRoute(k,xPoint,yPoint) {
     if (xPoint != null) {
         startPoint  = xPoint;
     } else {
-     startPoint = startPoint + offsetPoint;
+     startPoint = parseInt(startPoint) + parseInt(offsetPoint);
     }
 
     coord = [[startPoint , (yPoint == null ? 200: yPoint)]]
     allPoints[key] =coord;
-        // key = "route_" + routesCounter;
-    // allPoints[key] = [[startPoint = startPoint + offsetPoint, 200]]; //posiziona il primo punto
-    //allPoints[key] = [[xPoint, yPoint]]; //posiziona il primo punto
     selected = allPoints[key][0];           //resetta il punto selezionato
     first = selected;
 
@@ -188,9 +183,7 @@ function redraw() {
             return d[1];
         });
 
-
-    //circle.exit().remove();
-
+    // circle.exit().remove();
     //circle.exit().attr("class","");
 
     if (d3.event) {
